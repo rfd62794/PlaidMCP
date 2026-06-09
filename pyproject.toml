@@ -56,5 +56,6 @@ convention = "google"
 
 [dependency-groups]
 dev = [
+    "anyio>=4.13.0",
     "pytest-asyncio>=1.4.0",
 ]

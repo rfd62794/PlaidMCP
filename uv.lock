@@ -1091,6 +1091,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "anyio" },
     { name = "pytest-asyncio" },
 ]
 
@@ -1109,7 +1110,10 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest-asyncio", specifier = ">=1.4.0" }]
+dev = [
+    { name = "anyio", specifier = ">=4.13.0" },
+    { name = "pytest-asyncio", specifier = ">=1.4.0" },
+]
 
 [[package]]
 name = "platformdirs"
