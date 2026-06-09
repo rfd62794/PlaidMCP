@@ -1,45 +1,147 @@
-categories:
-  Food & Dining:
-    - mcdonald
-    - chipotle
-    - starbucks
-    - doordash
-    - uber eats
-    - grubhub
-    - chick-fil-a
-    - publix
-    - walmart grocery
-  Transport:
-    - uber
-    - lyft
-    - shell
-    - bp
-    - chevron
-    - sunpass
-    - parking
-  Shopping:
-    - amazon
-    - walmart
-    - target
-    - ebay
-  Entertainment:
-    - steam
-    - playstation
-    - netflix
-    - spotify
-    - youtube
-    - itch.io
-  Income:
-    - direct deposit
-    - payroll
-    - zelle
-    - cashapp
-    - venmo received
-  Transfer:
-    - transfer
-    - zelle
-    - cash app transfer
-  ATM:
-    - atm withdrawal
-    - cash withdrawal
-  Uncategorized: []
+# Internal transfers — EXCLUDED from spending analysis
+# These are Chime account mechanics, not real spending
+Internal Transfer:
+  - moved to secured deposit account
+  - moved from secured deposit account
+  - transfer from visa 1473
+  - chime san francisco ca
+  - chime card payment
+  - card payment from secured account
+  - transfer to chime savings account
+  - transfer from chime savings account
+  - transfer to secured deposit account
+  - transfer from secured deposit account
+  - transfer to secured account
+  - transfer from secured account
+  - my pay advance
+  - my pay repayment
+  - my pay instant advance fees
+  - moved from checking account
+  - moved to checking account
+  - moved from credit account
+  - moved to credit account
+  - paycheck: transfer to savings
+  - from savings
+  - to savings
+  - chime transfer
+
+# Income
+Income:
+  - integrity fulfil
+  - payroll
+  - direct deposit
+  - from ralph
+  - from star
+  - from ricardo
+  - transfer from ralph
+  - cash back
+  - refund
+  - spotme line of credit
+
+# Car
+Auto:
+  - westlake payment
+  - auto insurance
+  - insurance
+  - instant loan payment
+
+# Gas & Convenience
+Gas & Convenience:
+  - wawa
+  - marathon
+  - chevron
+  - raceway
+  - crown
+  - 7 eleven
+  - shell
+  - bp
+  - sunoco
+  - circle k
+
+# Food & Dining
+Food & Dining:
+  - mcdonald
+  - mc donald
+  - little caesars
+  - taco bell
+  - burger king
+  - publix
+  - uber eats
+  - doordash
+  - grubhub
+  - chipotle
+  - chick-fil-a
+  - starbucks
+  - dunkin
+  - pizza
+  - domino
+  - subway
+
+# Grocery & Household
+Grocery & Household:
+  - walmart
+  - target
+  - dollar general
+  - dollar tree
+  - amazon
+  - costco
+  - sam's club
+  - whole foods
+
+# Tobacco & Vape
+Tobacco & Vape:
+  - smokers oasis
+  - exotic retail
+  - smoke
+
+# Subscriptions & Digital
+Subscriptions:
+  - hulu
+  - netflix
+  - spotify
+  - google one
+  - google you tube
+  - youtube
+  - snapchat
+  - talkspace
+  - claude.ai
+  - claude.ai subscription
+  - anthropic
+  - microsoft
+  - apple
+  - disney
+
+# Gaming
+Gaming:
+  - steam
+  - steamgames
+  - wl *steam
+  - playstation
+  - xbox
+  - nintendo
+  - itch.io
+
+# ATM & Cash
+ATM & Cash:
+  - pnc bank
+  - atm withdrawal
+  - cash advance
+  - cash withdrawal
+
+# Person-to-Person Transfers
+P2P Transfer:
+  - transfer to roger
+  - transfer to ralph
+  - transfer to guineviere
+  - to guineviere
+  - from star
+  - cash app*
+
+# Government & Fees
+Government & Fees:
+  - nic* mydmvportal
+  - dmv
+  - fee
+  - penalty
+
+# Uncategorized: []
