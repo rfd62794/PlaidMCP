@@ -11,6 +11,8 @@ dependencies = [
     "pdfplumber>=0.11",
     "pytest>=8.0",
     "pyyaml>=6.0",
+    "fastmcp>=2.0",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -22,9 +24,10 @@ dev = [
 
 [project.scripts]
 chime-ingest = "chime_ingestor.cli:main"
+plaid-mcp = "plaid_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["chime_ingestor", "parsers", "config"]
+packages = ["chime_ingestor", "parsers", "config", "plaid_mcp"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
