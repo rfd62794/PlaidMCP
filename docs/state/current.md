@@ -20,8 +20,8 @@
 | Chime PDFs | 108 (Checking: 35*, Savings: 36, Credit: 36) |
 | CashApp PDFs | 49 |
 | **Total transactions** | **10,968** |
-| **Ingestion log entries** | **278** |
-| Idempotency verified | ✅ Second run: Processed: 0, Skipped: 278 |
+| **Ingestion log entries** | **157** (unique files, deduplicated) |
+| Idempotency verified | ✅ Second run: Processed: 0, Skipped: 157 |
 
 *Checking missing March 2024 — data gap confirmed
 
