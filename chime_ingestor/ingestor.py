@@ -35,8 +35,20 @@ def ingest_directory(data_dir: Path, db_path: Path) -> dict:
         "total_transactions": 0,
     }
 
-    # Find all PDF files recursively
-    pdf_files = list(data_dir.rglob("*.pdf"))
+    # Find all PDF files recursively and deduplicate by hash
+    all_pdf_paths = list(data_dir.rglob("*.pdf"))
+    seen_hashes: set[str] = set()
+    pdf_files: list[Path] = []
+
+    for pdf_path in all_pdf_paths:
+        try:
+            file_hash = compute_file_hash(pdf_path)
+            if file_hash not in seen_hashes:
+                seen_hashes.add(file_hash)
+                pdf_files.append(pdf_path)
+        except Exception:
+            # Skip files that can't be hashed
+            continue
 
     for pdf_path in pdf_files:
         try:
