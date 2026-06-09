@@ -35,5 +35,7 @@ c = conn.execute("SELECT COUNT(DISTINCT source_file) FROM ingestion_log")
 print(f"  Unique files: {c.fetchone()[0]}")
 c = conn.execute("SELECT COUNT(*) FROM ingestion_log")
 print(f"  Total log entries: {c.fetchone()[0]}")
+c = conn.execute("SELECT COUNT(DISTINCT source_hash) FROM ingestion_log")
+print(f"  Unique hashes: {c.fetchone()[0]}")
 
 conn.close()
