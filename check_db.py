@@ -30,4 +30,10 @@ c = conn.execute("SELECT status, COUNT(*) FROM ingestion_log GROUP BY status")
 for row in c.fetchall():
     print(f"  {row[0]}: {row[1]}")
 
+print("\n=== Summary ===")
+c = conn.execute("SELECT COUNT(DISTINCT source_file) FROM ingestion_log")
+print(f"  Unique files: {c.fetchone()[0]}")
+c = conn.execute("SELECT COUNT(*) FROM ingestion_log")
+print(f"  Total log entries: {c.fetchone()[0]}")
+
 conn.close()
