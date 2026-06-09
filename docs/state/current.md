@@ -25,6 +25,12 @@
 
 *Checking missing March 2024 — data gap confirmed
 
+**278 Anomaly Investigation:**
+- **Actual PDF count:** 157 (verified by `find data/ -name "*.pdf" | wc -l`)
+- **Root cause:** `rglob()` found CashApp PDFs at multiple paths during first ingestion
+- **Fix:** Path deduplication by hash in `ingestor.py` + SQL cleanup of `ingestion_log`
+- **Result:** 157 unique files, 157 log entries, 10,968 transactions
+
 **Database:** `finance.db` (2.5MB, gitignored)
 
 ## Data Reorganization

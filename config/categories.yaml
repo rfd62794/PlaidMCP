@@ -1,0 +1,45 @@
+categories:
+  Food & Dining:
+    - mcdonald
+    - chipotle
+    - starbucks
+    - doordash
+    - uber eats
+    - grubhub
+    - chick-fil-a
+    - publix
+    - walmart grocery
+  Transport:
+    - uber
+    - lyft
+    - shell
+    - bp
+    - chevron
+    - sunpass
+    - parking
+  Shopping:
+    - amazon
+    - walmart
+    - target
+    - ebay
+  Entertainment:
+    - steam
+    - playstation
+    - netflix
+    - spotify
+    - youtube
+    - itch.io
+  Income:
+    - direct deposit
+    - payroll
+    - zelle
+    - cashapp
+    - venmo received
+  Transfer:
+    - transfer
+    - zelle
+    - cash app transfer
+  ATM:
+    - atm withdrawal
+    - cash withdrawal
+  Uncategorized: []
