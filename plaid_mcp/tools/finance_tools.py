@@ -206,6 +206,70 @@ def get_ingestion_status() -> list[dict]:
         return [{"error": str(e)}]
 
 
+def get_top_merchants(
+    month: str,
+    limit: int = 20,
+    account_type: str = None,
+    institution: str = None,
+) -> list[dict]:
+    """
+    Return top merchants by total spend for a given month.
+    month: '2026-05' format. Returns [{description, total, count, avg}].
+    """
+    try:
+        db_path = _db_path()
+        from chime_ingestor.queries import get_top_merchants as _get_top_merchants
+        return _get_top_merchants(
+            month=month,
+            limit=limit,
+            account_type=account_type,
+            institution=institution,
+            db_path=db_path,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def search_transactions(
+    description_contains: str,
+    month: str = None,
+    institution: str = None,
+    limit: int = 100,
+) -> list[dict]:
+    """
+    Search transactions by description (case-insensitive substring).
+    Optional month filter in '2026-05' format.
+    """
+    try:
+        db_path = _db_path()
+        from chime_ingestor.queries import search_transactions as _search_transactions
+        return _search_transactions(
+            description_contains=description_contains,
+            month=month,
+            institution=institution,
+            limit=limit,
+            db_path=db_path,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def get_net_spending(month: str) -> dict:
+    """
+    Real spending for a month with internal Chime transfers excluded.
+    Returns total_outflow, total_inflow, net, excluded_transfer_volume, by_category.
+    """
+    try:
+        db_path = _db_path()
+        from chime_ingestor.queries import get_net_spending as _get_net_spending
+        return _get_net_spending(
+            month=month,
+            db_path=db_path,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def register_finance_tools(mcp):
     """Register all finance tools with the MCP server."""
     mcp.tool()(get_transactions)
@@ -214,3 +278,6 @@ def register_finance_tools(mcp):
     mcp.tool()(get_spending_trends)
     mcp.tool()(get_summary)
     mcp.tool()(get_ingestion_status)
+    mcp.tool()(get_top_merchants)
+    mcp.tool()(search_transactions)
+    mcp.tool()(get_net_spending)

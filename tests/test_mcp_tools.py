@@ -11,10 +11,13 @@ from chime_ingestor.models import ChimeTransaction
 from plaid_mcp.tools.finance_tools import (
     get_balance,
     get_ingestion_status,
+    get_net_spending,
     get_spending_by_category,
     get_spending_trends,
     get_summary,
+    get_top_merchants,
     get_transactions,
+    search_transactions,
 )
 
 
@@ -157,3 +160,36 @@ class TestGetIngestionStatus:
         """Returns list."""
         result = get_ingestion_status()
         assert isinstance(result, list)
+
+
+class TestGetTopMerchants:
+    """Tests for get_top_merchants tool."""
+
+    def test_mcp_top_merchants_error_handling(self, mock_db_path):
+        """Bad db path -> error dict."""
+        with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
+            result = get_top_merchants(month="2024-03")
+            assert isinstance(result, dict)
+            assert "error" in result
+
+
+class TestSearchTransactions:
+    """Tests for search_transactions tool."""
+
+    def test_mcp_search_error_handling(self, mock_db_path):
+        """Bad db path -> error dict."""
+        with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
+            result = search_transactions(description_contains="wawa")
+            assert isinstance(result, dict)
+            assert "error" in result
+
+
+class TestGetNetSpending:
+    """Tests for get_net_spending tool."""
+
+    def test_mcp_net_spending_error_handling(self, mock_db_path):
+        """Bad db path -> error dict."""
+        with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
+            result = get_net_spending(month="2024-03")
+            assert isinstance(result, dict)
+            assert "error" in result

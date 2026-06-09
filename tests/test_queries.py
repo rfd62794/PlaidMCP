@@ -9,9 +9,12 @@ from chime_ingestor.db import create_schema, get_connection, upsert_transactions
 from chime_ingestor.models import ChimeTransaction
 from chime_ingestor.queries import (
     get_balance,
+    get_net_spending,
     get_spending_by_category,
     get_spending_trends,
+    get_top_merchants,
     get_transactions,
+    search_transactions,
 )
 
 
@@ -287,5 +290,259 @@ class TestGetSpendingTrends:
         assert len(trends) == 1
         trend = trends[0]
         assert trend["net"] == trend["inflow"] + trend["outflow"]
+
+        db_path.unlink()
+
+
+class TestGetTopMerchants:
+    """Tests for get_top_merchants()."""
+
+    def test_get_top_merchants_returns_list(self):
+        """Returns list of dicts."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Wawa", "-15.50"),
+            _create_test_transaction(date(2024, 3, 2), "Wawa", "-8.25"),
+            _create_test_transaction(date(2024, 3, 3), "Target", "-45.99"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_top_merchants(month="2024-03", db_path=db_path)
+
+        assert isinstance(result, list)
+        assert len(result) > 0
+        for item in result:
+            assert "description" in item
+            assert "total" in item
+            assert "count" in item
+            assert "avg" in item
+
+        db_path.unlink()
+
+    def test_get_top_merchants_outflows_only(self):
+        """No positive amounts in results."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Income", "2500.00"),
+            _create_test_transaction(date(2024, 3, 2), "Wawa", "-15.50"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_top_merchants(month="2024-03", db_path=db_path)
+
+        # All totals should be negative (outflows only)
+        for item in result:
+            assert item["total"] < 0
+
+        db_path.unlink()
+
+    def test_get_top_merchants_sorted(self):
+        """First entry has lowest (most negative) total."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Small", "-10.00"),
+            _create_test_transaction(date(2024, 3, 2), "Large", "-100.00"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_top_merchants(month="2024-03", db_path=db_path)
+
+        assert result[0]["total"] < result[1]["total"]  # Most negative first
+
+        db_path.unlink()
+
+    def test_get_top_merchants_limit(self):
+        """Returns at most limit rows."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, i), f"Merchant{i}", f"-10.{i:02d}")
+            for i in range(1, 6)
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_top_merchants(month="2024-03", limit=3, db_path=db_path)
+
+        assert len(result) <= 3
+
+        db_path.unlink()
+
+
+class TestSearchTransactions:
+    """Tests for search_transactions()."""
+
+    def test_search_transactions_match(self):
+        """'wawa' returns rows with 'Wawa' in description."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Wawa Store 1234", "-15.50"),
+            _create_test_transaction(date(2024, 3, 2), "Target", "-45.99"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = search_transactions(description_contains="wawa", db_path=db_path)
+
+        assert len(result) == 1
+        assert "Wawa" in result[0]["description"]
+
+        db_path.unlink()
+
+    def test_search_transactions_case_insensitive(self):
+        """'WAWA' matches 'Wawa'."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Wawa Store", "-15.50"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = search_transactions(description_contains="WAWA", db_path=db_path)
+
+        assert len(result) == 1
+
+        db_path.unlink()
+
+    def test_search_transactions_month_filter(self):
+        """Wrong month returns no results."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Wawa", "-15.50"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = search_transactions(description_contains="wawa", month="2024-04", db_path=db_path)
+
+        assert len(result) == 0
+
+        db_path.unlink()
+
+
+class TestGetNetSpending:
+    """Tests for get_net_spending()."""
+
+    def test_get_net_spending_excludes_internal(self):
+        """'Moved to Secured' not in totals."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Moved to Secured Deposit Account", "-500.00"),
+            _create_test_transaction(date(2024, 3, 2), "Wawa", "-15.50"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_net_spending(month="2024-03", db_path=db_path)
+
+        # Internal transfer should be excluded
+        assert "Internal Transfer" not in result["by_category"]
+        assert result["total_outflow"] == -15.50
+
+        db_path.unlink()
+
+    def test_get_net_spending_reports_excluded_volume(self):
+        """excluded_transfer_volume > 0 when internal transfers exist."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Moved to Secured Deposit Account", "-500.00"),
+            _create_test_transaction(date(2024, 3, 2), "Wawa", "-15.50"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_net_spending(month="2024-03", db_path=db_path)
+
+        assert result["excluded_transfer_volume"] > 0
+
+        db_path.unlink()
+
+    def test_get_net_spending_by_category_keys(self):
+        """Returns dict with category strings."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        transactions = [
+            _create_test_transaction(date(2024, 3, 1), "Wawa", "-15.50"),
+            _create_test_transaction(date(2024, 3, 2), "McDonald's", "-8.25"),
+        ]
+        upsert_transactions(conn, transactions)
+        conn.close()
+
+        result = get_net_spending(month="2024-03", db_path=db_path)
+
+        assert isinstance(result["by_category"], dict)
+        for key in result["by_category"].keys():
+            assert isinstance(key, str)
 
         db_path.unlink()

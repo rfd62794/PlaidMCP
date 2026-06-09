@@ -239,3 +239,194 @@ def get_spending_trends(
         })
 
     return trends
+
+
+def get_top_merchants(
+    month: str,
+    limit: int = 20,
+    account_type: str | None = None,
+    institution: str | None = None,
+    db_path: Path = Path("finance.db"),
+) -> list[dict]:
+    """Return top merchants by total spend for a given month.
+
+    Args:
+        month: Month to analyze ("2026-05" format)
+        limit: Maximum number of merchants to return
+        account_type: Filter by account type
+        institution: Filter by institution
+        db_path: Path to SQLite database
+
+    Returns:
+        List of dicts with keys: description, total, count, avg
+    """
+    conn = get_connection(db_path)
+
+    conditions = ["date LIKE ?", "amount < 0"]
+    params = [f"{month}%"]
+
+    if account_type:
+        conditions.append("account_type = ?")
+        params.append(account_type)
+    if institution:
+        conditions.append("source_institution = ?")
+        params.append(institution)
+
+    where_clause = " AND ".join(conditions)
+
+    query = f"""
+        SELECT
+            description,
+            ROUND(SUM(amount), 2) as total,
+            COUNT(*) as count,
+            ROUND(AVG(amount), 2) as avg
+        FROM transactions
+        WHERE {where_clause}
+        GROUP BY description
+        ORDER BY total ASC
+        LIMIT ?
+    """
+    params.append(limit)
+
+    cursor = conn.execute(query, params)
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [
+        {
+            "description": row["description"],
+            "total": float(row["total"]),
+            "count": row["count"],
+            "avg": float(row["avg"]),
+        }
+        for row in rows
+    ]
+
+
+def search_transactions(
+    description_contains: str,
+    month: str | None = None,
+    institution: str | None = None,
+    limit: int = 100,
+    db_path: Path = Path("finance.db"),
+) -> list[dict]:
+    """Search transactions by description (case-insensitive substring match).
+
+    Args:
+        description_contains: Search string to match in description
+        month: Optional month filter ("2026-05" format)
+        institution: Optional institution filter
+        limit: Maximum results to return
+        db_path: Path to SQLite database
+
+    Returns:
+        List of transaction dictionaries
+    """
+    conn = get_connection(db_path)
+
+    conditions = ["LOWER(description) LIKE LOWER(?)"]
+    params = [f"%{description_contains}%"]
+
+    if month:
+        conditions.append("date LIKE ?")
+        params.append(f"{month}%")
+    if institution:
+        conditions.append("source_institution = ?")
+        params.append(institution)
+
+    where_clause = " AND ".join(conditions)
+
+    query = f"""
+        SELECT date, description, amount, balance, tx_type, account_type, source_institution, source_file
+        FROM transactions
+        WHERE {where_clause}
+        ORDER BY date DESC
+        LIMIT ?
+    """
+    params.append(limit)
+
+    cursor = conn.execute(query, params)
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [
+        {
+            "date": row["date"],
+            "description": row["description"],
+            "amount": row["amount"],
+            "balance": row["balance"],
+            "tx_type": row["tx_type"],
+            "account_type": row["account_type"],
+            "source_institution": row["source_institution"],
+            "source_file": row["source_file"],
+        }
+        for row in rows
+    ]
+
+
+def get_net_spending(
+    month: str,
+    db_path: Path = Path("finance.db"),
+) -> dict:
+    """Return real spending for a month with internal transfers excluded.
+
+    Loads categories from config/categories.yaml and excludes any transactions
+    matching the "Internal Transfer" category keywords.
+
+    Args:
+        month: Month to analyze ("2026-05" format)
+        db_path: Path to SQLite database
+
+    Returns:
+        Dict with total_outflow, total_inflow, net, excluded_transfer_volume, by_category
+    """
+    from chime_ingestor.categorizer import categorize, load_categories
+
+    conn = get_connection(db_path)
+
+    # Load all transactions for the month
+    cursor = conn.execute(
+        "SELECT date, description, amount FROM transactions WHERE date LIKE ?",
+        (f"{month}%",)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Load categories
+    try:
+        categories = load_categories()
+    except FileNotFoundError:
+        categories = {"Uncategorized": []}
+
+    # Calculate totals with internal transfers excluded
+    total_outflow = 0.0
+    total_inflow = 0.0
+    excluded_transfer_volume = 0.0
+    by_category: dict[str, float] = {}
+
+    for row in rows:
+        description = row["description"]
+        amount = float(row["amount"])
+        category = categorize(description, categories)
+
+        if category == "Internal Transfer":
+            excluded_transfer_volume += abs(amount)
+            continue
+
+        if amount < 0:
+            total_outflow += amount
+        else:
+            total_inflow += amount
+
+        by_category[category] = by_category.get(category, 0.0) + amount
+
+    return {
+        "month": month,
+        "total_outflow": round(total_outflow, 2),
+        "total_inflow": round(total_inflow, 2),
+        "net": round(total_outflow + total_inflow, 2),
+        "excluded_transfer_volume": round(excluded_transfer_volume, 2),
+        "by_category": {k: round(v, 2) for k, v in by_category.items()},
+    }
