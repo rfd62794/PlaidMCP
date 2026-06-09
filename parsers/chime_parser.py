@@ -79,6 +79,22 @@ def _parse_amount(amount_str: str) -> Optional[Decimal]:
         return None
 
 
+def _normalize_credit_amount(amount: Decimal, tx_type: str) -> Decimal:
+    """
+    Chime Credit statements record purchases as positive (debt added)
+    and payments as negative (debt reduced). Invert for spending analysis:
+    purchases → negative (outflow), payments → positive (inflow).
+    """
+    CREDIT_OUTFLOW_TYPES = {"Purchase", "ATM Withdrawal", "Cash Advance"}
+    CREDIT_INFLOW_TYPES = {"Payment", "Refund"}
+
+    if tx_type in CREDIT_OUTFLOW_TYPES:
+        return -abs(amount)   # always negative
+    elif tx_type in CREDIT_INFLOW_TYPES:
+        return abs(amount)    # always positive
+    return amount             # Transfer — unchanged
+
+
 def _find_transaction_type(description: str, raw_type: str) -> str:
     """Determine transaction type from description and raw type."""
     # Sort by length (longest first) so specific types match before general ones

@@ -9,6 +9,8 @@ import pytest
 from chime_ingestor.db import create_schema, get_connection, upsert_transactions
 from chime_ingestor.models import ChimeTransaction
 from plaid_mcp.tools.finance_tools import (
+    execute_readonly_query,
+    get_annual_summary,
     get_balance,
     get_ingestion_status,
     get_net_spending,
@@ -19,6 +21,7 @@ from plaid_mcp.tools.finance_tools import (
     get_transactions,
     search_transactions,
 )
+from plaid_mcp.tools.statement_tools import get_raw_statement_text
 
 
 def _create_test_transaction(
@@ -193,3 +196,35 @@ class TestGetNetSpending:
             result = get_net_spending(month="2024-03")
             assert isinstance(result, dict)
             assert "error" in result
+
+
+class TestExecuteReadonlyQuery:
+    """Tests for execute_readonly_query tool."""
+
+    def test_mcp_readonly_query_error(self, mock_db_path):
+        """Bad SQL -> error dict."""
+        with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
+            result = execute_readonly_query(sql="SELECT * FROM transactions")
+            assert isinstance(result, dict)
+            assert "error" in result
+
+
+class TestGetAnnualSummary:
+    """Tests for get_annual_summary tool."""
+
+    def test_mcp_annual_summary_error(self, mock_db_path):
+        """Bad db path -> error dict."""
+        with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
+            result = get_annual_summary(year="2024")
+            assert isinstance(result, dict)
+            assert "error" in result
+
+
+class TestGetRawStatementText:
+    """Tests for get_raw_statement_text tool."""
+
+    def test_mcp_raw_statement_not_found(self):
+        """Unknown file -> error dict."""
+        result = get_raw_statement_text(source_file="nonexistent-file-12345.pdf")
+        assert isinstance(result, dict)
+        assert "error" in result
