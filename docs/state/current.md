@@ -11,6 +11,7 @@
 | Phase 2 — Batch Ingestor + SQLite | **COMPLETE** | 79 passing | 35 |
 | Phase 3 — Query Layer | **COMPLETE** | 94 passing | 50 |
 | Phase 4 — MCP Tool Layer | **COMPLETE** | 102 passing | 60 |
+| Phase 5 — Category Refinement + Analysis Tools | **COMPLETE** | 115 passing | 75 |
 
 ## Ingestion Results
 
@@ -46,6 +47,21 @@
 - **Result:** 157 unique files, 157 log entries, 10,968 transactions
 
 **Database:** `finance.db` (2.5MB, gitignored)
+
+## Phase 5 — Real Spending Analysis
+
+**Problem solved:** Internal transfers were inflating outflows by ~$16k/month. Now excluded via "Internal Transfer" category.
+
+**New tools:**
+| Tool | Function |
+|------|----------|
+| `get_top_merchants(month, limit)` | GROUP BY description, aggregate spend |
+| `search_transactions(description, month)` | Case-insensitive merchant lookup |
+| `get_net_spending(month)` | Real spending with internal transfers excluded |
+
+**May 2026 real spending (excluded $26k internal):**
+- Total outflow: -$1,942.35
+- Top categories: Food & Dining ($356), Gas & Convenience ($342), Subscriptions ($286)
 
 ## Data Reorganization
 
