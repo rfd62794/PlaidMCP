@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "plaid-mcp": {
+      "command": "uv",
+      "args": ["--directory", "C:\\Github\\PlaidMCP", "run", "plaid-mcp"],
+      "env": {
+        "PLAID_DB_PATH": "C:\\Github\\PlaidMCP\\finance.db"
+      }
+    }
+  }
+}

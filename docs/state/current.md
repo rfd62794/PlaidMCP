@@ -9,8 +9,8 @@
 | Phase 1 — Foundation + Single PDF Parser | **COMPLETE** | 28 passing | 15 |
 | Phase 1.5 — Data Discovery & ADR-006 | **COMPLETE** | — | — |
 | Phase 2 — Batch Ingestor + SQLite | **COMPLETE** | 79 passing | 35 |
-| Phase 3 — Query Layer | Not started | — | 50 |
-| Phase 4 — MCP Tool Layer | Not started | — | 60 |
+| Phase 3 — Query Layer | **COMPLETE** | 94 passing | 50 |
+| Phase 4 — MCP Tool Layer | **COMPLETE** | 102 passing | 60 |
 
 ## Ingestion Results
 
@@ -24,6 +24,20 @@
 | Idempotency verified | ✅ Second run: Processed: 0, Skipped: 157 |
 
 *Checking missing March 2024 — data gap confirmed
+
+## Phase 4 Tools (MCP Layer)
+
+| Tool | Function |
+|------|----------|
+| `get_transactions` | Filtered transaction query |
+| `get_balance` | Chime balance lookup |
+| `get_spending_by_category` | Monthly spending by category |
+| `get_spending_trends` | N-month trend analysis |
+| `get_summary` | Database overview |
+| `get_ingestion_status` | Ingestion log |
+
+**MCP Server:** `plaid_mcp/server.py` — FastMCP stdio transport
+**Entry point:** `uv run plaid-mcp`
 
 **278 Anomaly Investigation:**
 - **Actual PDF count:** 157 (verified by `find data/ -name "*.pdf" | wc -l`)
