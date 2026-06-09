@@ -25,10 +25,15 @@ def load_categories(config_path: Path = Path("config/categories.yaml")) -> dict[
     with open(config_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
-    if not data or "categories" not in data:
+    if not data:
         return {"Uncategorized": []}
 
-    return data["categories"]
+    # Handle both flat structure (direct categories) and nested (categories: key)
+    if "categories" in data:
+        return data["categories"]
+
+    # Flat structure - filter out non-list values (comments, etc.)
+    return {k: v for k, v in data.items() if isinstance(v, list)}
 
 
 def categorize(description: str, categories: dict[str, list[str]]) -> str:
