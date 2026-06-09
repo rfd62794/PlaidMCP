@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 
 from chime_ingestor.models import ChimeTransaction
-from chime_ingestor.parser import (
+from parsers.chime_parser import (
     _detect_account_type,
     _extract_transactions_from_text,
     _find_transaction_type,
     _parse_amount,
     _parse_date,
-    parse_pdf,
 )
+from parsers import parse_pdf
 
 
 class TestDetectAccountType:
@@ -233,14 +233,19 @@ class TestChimeTransactionModel:
 class TestParsePdfIntegration:
     """Integration tests for parse_pdf with real files."""
 
-    def test_parse_pdf_file_not_found(self) -> None:
-        """Should raise FileNotFoundError for missing file."""
+    def test_parse_pdf_file_not_found(self, tmp_path: Path) -> None:
+        """Should raise FileNotFoundError for missing file in Chime dir."""
+        chime_dir = tmp_path / "Chime"
+        chime_dir.mkdir()
+        missing_pdf = chime_dir / "nonexistent.pdf"
         with pytest.raises(FileNotFoundError):
-            parse_pdf(Path("nonexistent.pdf"))
+            parse_pdf(missing_pdf)
 
     def test_parse_pdf_not_pdf(self, tmp_path: Path) -> None:
-        """Should raise ValueError for non-PDF files."""
-        txt_file = tmp_path / "test.txt"
+        """Should raise ValueError for non-PDF files in Chime dir."""
+        chime_dir = tmp_path / "Chime"
+        chime_dir.mkdir()
+        txt_file = chime_dir / "test.txt"
         txt_file.write_text("not a pdf")
         with pytest.raises(ValueError, match="not a PDF"):
             parse_pdf(txt_file)
