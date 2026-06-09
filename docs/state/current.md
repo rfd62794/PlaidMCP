@@ -8,9 +8,24 @@
 |-------|--------|-------|--------|
 | Phase 1 — Foundation + Single PDF Parser | **COMPLETE** | 28 passing | 15 |
 | Phase 1.5 — Data Discovery & ADR-006 | **COMPLETE** | — | — |
-| Phase 2 — Batch Ingestor + SQLite | **BLOCKED** (pending ADR-006 implementation) | — | 35 |
+| Phase 2 — Batch Ingestor + SQLite | **COMPLETE** | 79 passing | 35 |
 | Phase 3 — Query Layer | Not started | — | 50 |
 | Phase 4 — MCP Tool Layer | Not started | — | 60 |
+
+## Ingestion Results
+
+| Metric | Value |
+|--------|-------|
+| Total PDFs processed | 278 |
+| Chime PDFs | 108 (Checking: 35*, Savings: 36, Credit: 36) |
+| CashApp PDFs | 49 |
+| **Total transactions** | **10,968** |
+| **Ingestion log entries** | **278** |
+| Idempotency verified | ✅ Second run: Processed: 0, Skipped: 278 |
+
+*Checking missing March 2024 — data gap confirmed
+
+**Database:** `finance.db` (2.5MB, gitignored)
 
 ## Data Reorganization
 
