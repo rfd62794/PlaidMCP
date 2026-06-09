@@ -144,6 +144,10 @@ def _extract_transactions_from_text(
             # Normalize transaction type
             tx_type = _find_transaction_type(description, tx_type_raw)
 
+            # Normalize Credit polarity: purchases → negative, payments → positive
+            if account_type == "Credit":
+                amount = _normalize_credit_amount(amount, tx_type)
+
             try:
                 # Determine balance if present in match
                 balance = None
