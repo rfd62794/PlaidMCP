@@ -8,6 +8,8 @@ import pytest
 from chime_ingestor.db import create_schema, get_connection, upsert_transactions
 from chime_ingestor.models import ChimeTransaction
 from chime_ingestor.queries import (
+    execute_readonly_query,
+    get_annual_summary,
     get_balance,
     get_net_spending,
     get_spending_by_category,
@@ -544,5 +546,162 @@ class TestGetNetSpending:
         assert isinstance(result["by_category"], dict)
         for key in result["by_category"].keys():
             assert isinstance(key, str)
+
+        db_path.unlink()
+
+
+class TestExecuteReadonlyQuery:
+    """Tests for execute_readonly_query()."""
+
+    def test_readonly_query_select_allowed(self):
+        """Valid SELECT returns list."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        # Insert a test transaction
+        conn.execute(
+            "INSERT INTO transactions (date, description, amount, tx_type, account_type, source_institution, source_file) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("2024-03-15", "Test", -10.00, "Purchase", "Credit", "chime", "test.pdf")
+        )
+        conn.commit()
+        conn.close()
+
+        result = execute_readonly_query("SELECT * FROM transactions", db_path=db_path)
+
+        assert isinstance(result, list)
+        assert len(result) == 1
+        assert result[0]["description"] == "Test"
+
+        db_path.unlink()
+
+    def test_readonly_query_rejects_update(self):
+        """UPDATE raises ValueError."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+        conn.close()
+
+        with pytest.raises(ValueError, match="Only SELECT statements permitted"):
+            execute_readonly_query("UPDATE transactions SET amount = 0", db_path=db_path)
+
+        db_path.unlink()
+
+    def test_readonly_query_rejects_drop(self):
+        """DROP raises ValueError."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        with pytest.raises(ValueError, match="Only SELECT statements permitted"):
+            execute_readonly_query("DROP TABLE transactions", db_path=db_path)
+
+        db_path.unlink()
+
+    def test_readonly_query_rejects_insert(self):
+        """INSERT raises ValueError."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        with pytest.raises(ValueError, match="Only SELECT statements permitted"):
+            execute_readonly_query("INSERT INTO transactions VALUES (1,2,3)", db_path=db_path)
+
+        db_path.unlink()
+
+    def test_readonly_query_limit_capped(self):
+        """limit=9999 → 500 max rows."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        # Insert 600 rows
+        for i in range(600):
+            conn.execute(
+                "INSERT INTO transactions (date, description, amount, tx_type, account_type, source_institution, source_file) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                ("2024-03-15", f"Test{i}", -10.00, "Purchase", "Credit", "chime", "test.pdf")
+            )
+        conn.commit()
+        conn.close()
+
+        result = execute_readonly_query("SELECT * FROM transactions", limit=9999, db_path=db_path)
+
+        # Should be capped at 500
+        assert len(result) <= 500
+
+        db_path.unlink()
+
+
+class TestGetAnnualSummary:
+    """Tests for get_annual_summary()."""
+
+    def test_annual_summary_structure(self):
+        """Returns dict with months list."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        # Insert transactions in multiple months
+        for month in [1, 2, 3]:
+            conn.execute(
+                "INSERT INTO transactions (date, description, amount, tx_type, account_type, source_institution, source_file) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (f"2024-{month:02d}-15", "Test", -10.00, "Purchase", "Credit", "chime", "test.pdf")
+            )
+        conn.commit()
+        conn.close()
+
+        result = get_annual_summary("2024", db_path=db_path)
+
+        assert isinstance(result, dict)
+        assert "year" in result
+        assert result["year"] == "2024"
+        assert "months" in result
+        assert isinstance(result["months"], list)
+        assert "annual_totals" in result
+        assert isinstance(result["annual_totals"], dict)
+
+        db_path.unlink()
+
+    def test_annual_summary_skips_empty(self):
+        """Months with no data excluded."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = Path(tmp.name)
+
+        conn = get_connection(db_path)
+        create_schema(conn)
+
+        # Insert only March 2024
+        conn.execute(
+            "INSERT INTO transactions (date, description, amount, tx_type, account_type, source_institution, source_file) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("2024-03-15", "Test", -10.00, "Purchase", "Credit", "chime", "test.pdf")
+        )
+        conn.commit()
+        conn.close()
+
+        result = get_annual_summary("2024", db_path=db_path)
+
+        # Should only have March
+        assert len(result["months"]) == 1
+        assert result["months"][0]["month"] == "2024-03"
 
         db_path.unlink()

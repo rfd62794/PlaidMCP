@@ -430,3 +430,103 @@ def get_net_spending(
         "excluded_transfer_volume": round(excluded_transfer_volume, 2),
         "by_category": {k: round(v, 2) for k, v in by_category.items()},
     }
+
+
+def execute_readonly_query(
+    sql: str,
+    params: dict | None = None,
+    limit: int = 500,
+    db_path: Path = Path("finance.db"),
+) -> list[dict]:
+    """Execute a read-only SQL query against finance.db.
+
+    SELECT statements only. Max 500 rows returned.
+
+    Args:
+        sql: SELECT query to execute
+        params: Optional query parameters
+        limit: Maximum rows to return (capped at 500)
+        db_path: Path to SQLite database
+
+    Returns:
+        List of rows as dictionaries
+
+    Raises:
+        ValueError: If SQL is not a SELECT statement
+    """
+    # Validate SQL starts with SELECT
+    stripped = sql.strip().upper()
+    if not stripped.startswith("SELECT"):
+        raise ValueError("Only SELECT statements permitted")
+
+    # Check if LIMIT is already present
+    has_limit = "LIMIT" in stripped
+
+    # Cap limit at 500
+    effective_limit = min(limit, 500)
+
+    conn = get_connection(db_path)
+
+    if not has_limit:
+        sql = f"{sql.rstrip(';')} LIMIT {effective_limit}"
+
+    cursor = conn.execute(sql, params or {})
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def get_annual_summary(
+    year: str,
+    db_path: Path = Path("finance.db"),
+) -> dict:
+    """Return 12-month breakdown for a given year.
+
+    Uses get_net_spending logic (internal transfers excluded) per month.
+
+    Args:
+        year: Year to analyze ("2026" format)
+        db_path: Path to SQLite database
+
+    Returns:
+        Dict with year, months list, and annual_totals
+    """
+    months = []
+    annual_outflow = 0.0
+    annual_inflow = 0.0
+    annual_net = 0.0
+    annual_excluded = 0.0
+
+    for month_num in range(1, 13):
+        month_str = f"{year}-{month_num:02d}"
+        month_data = get_net_spending(month_str, db_path)
+
+        # Skip months with no transactions
+        if month_data["total_outflow"] == 0 and month_data["total_inflow"] == 0:
+            continue
+
+        months.append({
+            "month": month_str,
+            "outflow": month_data["total_outflow"],
+            "inflow": month_data["total_inflow"],
+            "net": month_data["net"],
+            "excluded": month_data["excluded_transfer_volume"],
+        })
+
+        annual_outflow += month_data["total_outflow"]
+        annual_inflow += month_data["total_inflow"]
+        annual_net += month_data["net"]
+        annual_excluded += month_data["excluded_transfer_volume"]
+
+    return {
+        "year": year,
+        "months": months,
+        "annual_totals": {
+            "outflow": round(annual_outflow, 2),
+            "inflow": round(annual_inflow, 2),
+            "net": round(annual_net, 2),
+            "excluded_transfer_volume": round(annual_excluded, 2),
+        },
+    }

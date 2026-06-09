@@ -270,6 +270,42 @@ def get_net_spending(month: str) -> dict:
         return {"error": str(e)}
 
 
+def execute_readonly_query(sql: str, limit: int = 500) -> list[dict] | dict:
+    """
+    Run a read-only SQL SELECT against finance.db.
+    Use for ad-hoc analysis — any question the existing tools don't answer.
+    Max 500 rows. SELECT only — no INSERT, UPDATE, DELETE, DROP.
+    Example: SELECT description, SUM(amount) FROM transactions
+             WHERE account_type='Credit' GROUP BY description ORDER BY SUM(amount)
+    """
+    try:
+        db_path = _db_path()
+        from chime_ingestor.queries import execute_readonly_query as _execute_readonly_query
+        return _execute_readonly_query(
+            sql=sql,
+            limit=limit,
+            db_path=db_path,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def get_annual_summary(year: str) -> dict:
+    """
+    Return 12-month breakdown for a given year.
+    Uses get_net_spending logic (internal transfers excluded) per month.
+    """
+    try:
+        db_path = _db_path()
+        from chime_ingestor.queries import get_annual_summary as _get_annual_summary
+        return _get_annual_summary(
+            year=year,
+            db_path=db_path,
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def register_finance_tools(mcp):
     """Register all finance tools with the MCP server."""
     mcp.tool()(get_transactions)
@@ -281,3 +317,5 @@ def register_finance_tools(mcp):
     mcp.tool()(get_top_merchants)
     mcp.tool()(search_transactions)
     mcp.tool()(get_net_spending)
+    mcp.tool()(execute_readonly_query)
+    mcp.tool()(get_annual_summary)
