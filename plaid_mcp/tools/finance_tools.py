@@ -16,7 +16,7 @@ def _db_path() -> Path:
     return Path(os.getenv("PLAID_DB_PATH", "finance.db"))
 
 
-async def get_transactions(
+def get_transactions(
     start_date: str | None = None,
     end_date: str | None = None,
     institution: str | None = None,
@@ -56,7 +56,7 @@ async def get_transactions(
         return [{"error": str(e)}]
 
 
-async def get_balance(
+def get_balance(
     date: str | None = None,
     account_type: str | None = None,
 ) -> dict:
@@ -85,7 +85,7 @@ async def get_balance(
         return {"error": str(e)}
 
 
-async def get_spending_by_category(
+def get_spending_by_category(
     month: str,
     institution: str | None = None,
 ) -> dict:
@@ -110,7 +110,7 @@ async def get_spending_by_category(
         return {"error": str(e)}
 
 
-async def get_spending_trends(
+def get_spending_trends(
     months: int = 6,
 ) -> list[dict]:
     """
@@ -132,7 +132,7 @@ async def get_spending_trends(
         return [{"error": str(e)}]
 
 
-async def get_summary() -> dict:
+def get_summary() -> dict:
     """
     Return overview of finance.db contents.
 
@@ -170,7 +170,7 @@ async def get_summary() -> dict:
         return {"error": str(e)}
 
 
-async def get_ingestion_status() -> list[dict]:
+def get_ingestion_status() -> list[dict]:
     """
     Return ingestion log — which files have been processed and when.
 

@@ -78,25 +78,22 @@ def mock_db_path(tmp_path):
 class TestGetTransactions:
     """Tests for get_transactions tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_transactions_returns_list(self, mock_db_path):
+    def test_get_transactions_returns_list(self, mock_db_path):
         """Returns list, not exception."""
-        result = await get_transactions(limit=10)
+        result = get_transactions(limit=10)
         assert isinstance(result, list)
         assert len(result) > 0
 
-    @pytest.mark.asyncio
-    async def test_get_transactions_limit_capped(self, mock_db_path):
+    def test_get_transactions_limit_capped(self, mock_db_path):
         """limit=9999 -> capped at 500."""
-        result = await get_transactions(limit=9999)
+        result = get_transactions(limit=9999)
         # Should not error and should return data
         assert isinstance(result, list)
 
-    @pytest.mark.asyncio
-    async def test_get_transactions_error_returns_dict(self, mock_db_path):
+    def test_get_transactions_error_returns_dict(self, mock_db_path):
         """Bad db path -> list with error dict."""
         with patch("plaid_mcp.tools.finance_tools._db_path", return_value=Path("/nonexistent/bad.db")):
-            result = await get_transactions()
+            result = get_transactions()
             # Should return list with error entry
             assert isinstance(result, list)
             assert len(result) == 1
@@ -106,10 +103,9 @@ class TestGetTransactions:
 class TestGetBalance:
     """Tests for get_balance tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_balance_returns_dict(self, mock_db_path):
+    def test_get_balance_returns_dict(self, mock_db_path):
         """Returns dict with balance."""
-        result = await get_balance()
+        result = get_balance()
         assert isinstance(result, dict)
         assert "balance" in result
 
@@ -117,10 +113,9 @@ class TestGetBalance:
 class TestGetSpendingByCategory:
     """Tests for get_spending_by_category tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_spending_by_category_format(self, mock_db_path):
+    def test_get_spending_by_category_format(self, mock_db_path):
         """Returns dict with string keys."""
-        result = await get_spending_by_category(month="2024-03")
+        result = get_spending_by_category(month="2024-03")
         assert isinstance(result, dict)
         # Should have some categories or be empty dict
         for key in result.keys():
@@ -130,10 +125,9 @@ class TestGetSpendingByCategory:
 class TestGetSpendingTrends:
     """Tests for get_spending_trends tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_spending_trends_format(self, mock_db_path):
+    def test_get_spending_trends_format(self, mock_db_path):
         """Returns list of dicts with correct keys."""
-        result = await get_spending_trends(months=3)
+        result = get_spending_trends(months=3)
         assert isinstance(result, list)
         if result:
             for trend in result:
@@ -146,10 +140,9 @@ class TestGetSpendingTrends:
 class TestGetSummary:
     """Tests for get_summary tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_summary_keys(self, mock_db_path):
+    def test_get_summary_keys(self, mock_db_path):
         """Returns dict with total_transactions, date_range."""
-        result = await get_summary()
+        result = get_summary()
         assert isinstance(result, dict)
         assert "total_transactions" in result
         assert "institutions" in result
@@ -160,8 +153,7 @@ class TestGetSummary:
 class TestGetIngestionStatus:
     """Tests for get_ingestion_status tool."""
 
-    @pytest.mark.asyncio
-    async def test_get_ingestion_status_list(self, mock_db_path):
+    def test_get_ingestion_status_list(self, mock_db_path):
         """Returns list."""
-        result = await get_ingestion_status()
+        result = get_ingestion_status()
         assert isinstance(result, list)
