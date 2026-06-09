@@ -19,6 +19,7 @@ class ChimeTransaction:
         balance: Optional running balance after this transaction
         source_file: Filename of the source PDF
         account_type: Type of account (Checking, Savings, Credit)
+        source_institution: Institution that issued the statement (chime, cashapp)
     """
 
     transaction_date: date
@@ -29,6 +30,7 @@ class ChimeTransaction:
     balance: Optional[Decimal] = None
     source_file: str = ""
     account_type: str = ""
+    source_institution: str = "chime"
 
     def __post_init__(self) -> None:
         """Validate the transaction data."""
@@ -58,4 +60,5 @@ class ChimeTransaction:
             "balance": str(self.balance) if self.balance else None,
             "source_file": self.source_file,
             "account_type": self.account_type,
+            "source_institution": self.source_institution,
         }

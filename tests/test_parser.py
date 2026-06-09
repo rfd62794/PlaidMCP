@@ -247,7 +247,7 @@ class TestParsePdfIntegration:
 
     def test_parse_real_checking_pdf(self) -> None:
         """Should parse real Checking PDF and return transactions."""
-        pdf_path = Path("data/Chime-Checking-Statement-January-2025.pdf")
+        pdf_path = Path("data/Chime/Chime-Checking-Statement-January-2025.pdf")
         if not pdf_path.exists():
             pytest.skip("Checking PDF not found")
 
@@ -256,6 +256,9 @@ class TestParsePdfIntegration:
 
         # All should have Checking account type
         assert all(tx.account_type == "Checking" for tx in txs)
+
+        # All should have chime source_institution
+        assert all(tx.source_institution == "chime" for tx in txs)
 
         # All should have valid dates
         assert all(isinstance(tx.transaction_date, date) for tx in txs)
@@ -266,23 +269,25 @@ class TestParsePdfIntegration:
 
     def test_parse_real_savings_pdf(self) -> None:
         """Should parse real Savings PDF and return transactions."""
-        pdf_path = Path("data/Chime-Savings-Statement-January-2025.pdf")
+        pdf_path = Path("data/Chime/Chime-Savings-Statement-January-2025.pdf")
         if not pdf_path.exists():
             pytest.skip("Savings PDF not found")
 
         txs = parse_pdf(pdf_path)
         assert len(txs) > 0
         assert all(tx.account_type == "Savings" for tx in txs)
+        assert all(tx.source_institution == "chime" for tx in txs)
 
     def test_parse_real_credit_pdf(self) -> None:
         """Should parse real Credit PDF and return transactions."""
-        pdf_path = Path("data/Chime-Credit-Statement-January-2025.pdf")
+        pdf_path = Path("data/Chime/Chime-Credit-Statement-January-2025.pdf")
         if not pdf_path.exists():
             pytest.skip("Credit PDF not found")
 
         txs = parse_pdf(pdf_path)
         assert len(txs) > 0
         assert all(tx.account_type == "Credit" for tx in txs)
+        assert all(tx.source_institution == "chime" for tx in txs)
 
 
 # Count tests for SDD compliance

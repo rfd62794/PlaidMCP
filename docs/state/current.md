@@ -7,17 +7,61 @@
 | Phase | Status | Tests | Target |
 |-------|--------|-------|--------|
 | Phase 1 — Foundation + Single PDF Parser | **COMPLETE** | 28 passing | 15 |
-| Phase 2 — Batch Ingestor + SQLite | Not started | — | 35 |
+| Phase 1.5 — Data Discovery & ADR-006 | **COMPLETE** | — | — |
+| Phase 2 — Batch Ingestor + SQLite | **BLOCKED** (pending ADR-006 implementation) | — | 35 |
 | Phase 3 — Query Layer | Not started | — | 50 |
 | Phase 4 — MCP Tool Layer | Not started | — | 60 |
+
+## Data Reorganization
+
+**Files moved to subdirectories:**
+- `data/Chime/` — 108 PDFs (36 Checking, 36 Savings, 36 Credit)
+- `data/CashApp/` — 49 PDFs (generic numbered filenames)
+
+## Missing Statement Gap Analysis
+
+| Account | Count | Range | Status |
+|---------|-------|-------|--------|
+| Checking | 35 | 2023-06 → 2026-05 | **Missing March 2024** |
+| Savings | 36 | 2023-06 → 2026-05 | ✓ Complete |
+| Credit | 36 | 2023-06 → 2026-05 | ✓ Complete |
+
+**Gap**: Checking missing **March 2024** (2024-03). This is likely a download omission, not a missing statement period.
+
+## CashApp Discovery (Phase 0 for ADR-006)
+
+**Critical finding**: CashApp PDFs use a **fundamentally different layout** than Chime.
+
+| Aspect | Chime | CashApp |
+|--------|-------|---------|
+| **Date format** | `1/31/2025` (M/D/YYYY) | `Apr 8` (Mon D) |
+| **Columns** | 6 (DATE, DESC, TYPE, AMOUNT, BALANCE, SETTLEMENT) | 5 (DATE, DESC, DETAILS, FEE, AMOUNT) |
+| **Amount format** | `-$50.00` or `$200.00` | `$0.00 + $2.40` (fee shown separately) |
+| **Polarity** | Negative sign for outflows | `+` / implicit `-` indicators |
+| **Transaction types** | Transfer, Purchase, Direct Deposit | Cash App payment, Cash App Card, ATM withdrawal, Direct deposit |
+
+**Conclusion**: Single regex parser won't work. Requires **multi-institution parser registry** (ADR-006).
+
+## ADR-006: Multi-Institution Parser Registry
+
+**Status**: Documented, awaiting implementation
+
+**Decision**: Registry pattern with institution-specific parsers:
+- `BaseParser` abstract interface
+- `ChimeParser` — existing regex logic
+- `CashAppParser` — new implementation for CashApp layout
+- `PARSER_REGISTRY` — dispatch by institution name
+- Institution detection via filename patterns
+
+**Schema change**: `source_institution` field added to `ChimeTransaction` (default: "chime")
 
 ## What Works
 
 ### Parser (`chime_ingestor/parser.py`)
-- **Text-based regex extraction**: Chime PDFs don't contain actual table structures, so the parser uses regex patterns on extracted text
-- **Three account types supported**: Checking, Savings, Credit — all tested against real statements
+- **Text-based regex extraction**: Chime PDFs don't contain actual table structures
+- **Three account types supported**: Checking, Savings, Credit — all tested
 - **Transaction extraction**: Parses date, description, type, amount, balance, settlement date
-- **Idempotent ready**: Each transaction carries `source_file` and `account_type` metadata
+- **Idempotent ready**: `source_file`, `account_type`, `source_institution` metadata
 
 ### Models (`chime_ingestor/models.py`)
 - `ChimeTransaction` dataclass with frozen/slots for immutability and memory efficiency

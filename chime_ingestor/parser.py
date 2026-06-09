@@ -194,6 +194,7 @@ def _extract_transactions_from_text(
                     balance=balance,
                     source_file=source_file,
                     account_type=account_type,
+                    source_institution="chime",
                 )
                 transactions.append(tx)
             except ValueError:
