@@ -565,13 +565,13 @@ source = { editable = "." }
 dependencies = [
     { name = "pdfplumber" },
     { name = "pytest" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pytest-cov" },
-    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -581,7 +581,7 @@ requires-dist = [
     { name = "pdfplumber", specifier = ">=0.11" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
 ]
 provides-extras = ["dev"]
