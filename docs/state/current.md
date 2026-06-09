@@ -12,6 +12,7 @@
 | Phase 3 — Query Layer | **COMPLETE** | 94 passing | 50 |
 | Phase 4 — MCP Tool Layer | **COMPLETE** | 102 passing | 60 |
 | Phase 5 — Category Refinement + Analysis Tools | **COMPLETE** | 115 passing | 75 |
+| Phase 6 — Credit Polarity Fix + Advanced Tools | **COMPLETE** | 138 passing | 133 |
 
 ## Ingestion Results
 
@@ -47,6 +48,27 @@
 - **Result:** 157 unique files, 157 log entries, 10,968 transactions
 
 **Database:** `finance.db` (2.5MB, gitignored)
+
+## Phase 6 — Credit Polarity Fix
+
+**Problem solved:** Chime Credit statements recorded purchases as positive (debt added) and payments as negative (debt reduced). This inverted polarity made spending analysis useless.
+
+**Fix:**
+- Parser: `_normalize_credit_amount()` — Purchases/ATM → negative, Payments/Refunds → positive
+- Migration: `migrate_credit_polarity()` — 1,643 transactions corrected (1,616 outflows, 27 inflows)
+
+**New tools:**
+| Tool | Function |
+|------|----------|
+| `execute_readonly_query(sql)` | Ad-hoc SQL SELECT (500 row limit) |
+| `get_raw_statement_text(file, page)` | PDF text extraction for verification |
+| `get_annual_summary(year)` | 12-month breakdown |
+
+**Verification — May 2026 after fix:**
+- Credit purchases now negative (outflow): -$3,439.24 across 1,593 transactions
+- Credit payments now positive (inflow): +$26,637.58 across 22 transactions
+- Total outflow: -$4,044.88 (real spending)
+- Excluded internal transfers: $26,402.18
 
 ## Phase 5 — Real Spending Analysis
 
