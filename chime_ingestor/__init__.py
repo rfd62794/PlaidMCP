@@ -3,6 +3,5 @@
 __version__ = "0.1.0"
 
 from chime_ingestor.models import ChimeTransaction
-from chime_ingestor.parser import parse_pdf
 
-__all__ = ["ChimeTransaction", "parse_pdf"]
+__all__ = ["ChimeTransaction"]
