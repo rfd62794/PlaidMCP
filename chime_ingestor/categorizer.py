@@ -51,8 +51,11 @@ def categorize(description: str, categories: dict[str, list[str]]) -> str:
     # Sort keywords by length (longest first) to ensure specific matches win
     all_keywords = []
     for category, keywords in categories.items():
+        if not isinstance(keywords, list):
+            continue
         for keyword in keywords:
-            all_keywords.append((category, keyword))
+            if isinstance(keyword, str):
+                all_keywords.append((category, keyword))
 
     # Sort by keyword length descending
     all_keywords.sort(key=lambda x: len(x[1]), reverse=True)
