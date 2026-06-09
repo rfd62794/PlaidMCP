@@ -1,32 +1,30 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "chime-ingestor"
+name = "plaid-mcp"
 version = "0.1.0"
-description = "Chime PDF statement parser and MCP tool layer"
-requires-python = ">=3.11"
+description = "Chime/CashApp PDF ingestor with MCP query layer"
+requires-python = ">=3.12"
 dependencies = [
-    "pdfplumber>=0.11.0",
-    "pydantic>=2.0",
-    "pyyaml>=6.0",
+    "pdfplumber>=0.11",
+    "pytest>=8.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
     "pytest-cov>=4.0",
     "mypy>=1.0",
     "ruff>=0.1.0",
+    "pyyaml>=6.0",
 ]
 
 [project.scripts]
 chime-ingest = "chime_ingestor.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["chime_ingestor*"]
+[tool.hatch.build.targets.wheel]
+packages = ["chime_ingestor", "parsers", "config"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -35,13 +33,13 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
